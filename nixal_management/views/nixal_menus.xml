@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_nixal_root" name="Nixal" sequence="5"/>
+
+    <record id="action_nixal_setup_companies" model="ir.actions.act_window">
+        <field name="name">Crear compañías Nixal</field>
+        <field name="res_model">nixal.setup.companies.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+    <menuitem id="menu_nixal_setup_companies"
+              name="1. Crear compañías"
+              parent="menu_nixal_root"
+              action="action_nixal_setup_companies"
+              sequence="10"/>
+
+    <record id="action_nixal_demo_import" model="ir.actions.act_window">
+        <field name="name">Importar ejemplo por línea de negocio</field>
+        <field name="res_model">nixal.demo.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+    <menuitem id="menu_nixal_demo_import"
+              name="2. Importar ejemplo (demo)"
+              parent="menu_nixal_root"
+              action="action_nixal_demo_import"
+              sequence="20"/>
+
+    <record id="action_nixal_full_import" model="ir.actions.act_window">
+        <field name="name">Importar todos los datos</field>
+        <field name="res_model">nixal.full.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+    <menuitem id="menu_nixal_full_import"
+              name="3. Importar todos los datos"
+              parent="menu_nixal_root"
+              action="action_nixal_full_import"
+              sequence="30"/>
+</odoo>

@@ -1,0 +1,116 @@
+from odoo import Command, _, fields, models
+
+COMPANY_NAMES = [
+    "Nixal NC",
+    "Nixal Trade",
+    "NixAl Agri",
+    "Nixal Financiación e Inversiones",
+]
+CHART_TEMPLATE = "es_pymes"
+AGRI_ANALYTIC_PLAN = "Categorías Nixal"
+AGRI_SPECIES = ["Vacuno", "Porcino", "Ovino"]
+
+
+class NixalSetupCompaniesWizard(models.TransientModel):
+    _name = "nixal.setup.companies.wizard"
+    _description = "Crear las compañías del grupo Nixal"
+
+    result_message = fields.Text(readonly=True)
+
+    def _compute_display_name(self):
+        for wizard in self:
+            wizard.display_name = _("Crear compañías Nixal")
+
+    def _setup_agri_analytics(self, agri_company):
+        """Create one analytic account per species (Vacuno/Porcino/Ovino)
+        for NixAl Agri, so income/expenses and budgets can be broken down
+        by species like in the client's own spreadsheets.
+
+        These are added to Odoo's default "Project" analytic plan (renamed
+        here) rather than a new plan: account_budget_oca's budget-vs-actual
+        comparison only looks at account.analytic.line.account_id, which is
+        only populated for that root plan - any other plan stores its
+        accounts in a separate dynamic column and would never match.
+        """
+        plan = self.env.ref("analytic.analytic_plan_projects")
+        if plan.name != AGRI_ANALYTIC_PLAN:
+            plan.name = AGRI_ANALYTIC_PLAN
+        Analytic = self.env["account.analytic.account"]
+        for species in AGRI_SPECIES:
+            account = Analytic.search([
+                ("name", "=", species),
+                ("plan_id", "=", plan.id),
+                ("company_id", "=", agri_company.id),
+            ], limit=1)
+            if not account:
+                Analytic.create({
+                    "name": species,
+                    "plan_id": plan.id,
+                    "company_id": agri_company.id,
+                })
+
+    def action_create_companies(self):
+        self.ensure_one()
+        eur = self.env.ref("base.EUR")
+        spain = self.env.ref("base.es")
+        company_model = self.env["res.company"]
+
+        existing_companies = company_model.search([("name", "in", COMPANY_NAMES)])
+        existing = existing_companies.mapped("name")
+        missing_names = [n for n in COMPANY_NAMES if n not in existing]
+
+        # Companies must be created in a single batch call: res.company's
+        # own create() only triggers the country-based auto-install of
+        # localization modules (e.g. account_peppol for Spain) *once*, after
+        # all rows in the batch are inserted. Creating them one by one lets
+        # that auto-install race with the next iteration's INSERT and leave
+        # a required field without its default value.
+        new_companies = company_model.create([
+            {"name": name, "currency_id": eur.id, "country_id": spain.id}
+            for name in missing_names
+        ]) if missing_names else company_model
+
+        companies = existing_companies | new_companies
+        # Make sure every Nixal company is "allowed" for this request,
+        # regardless of what the user has active in the company switcher -
+        # otherwise multi-company record rules can block the chart of
+        # accounts / journals being set up for a company not yet selected.
+        self = self.with_context(
+            allowed_company_ids=list(
+                set(self.env.context.get("allowed_company_ids") or self.env.companies.ids)
+                | set(companies.ids)
+            )
+        )
+        chart_template_model = self.env["account.chart.template"]
+        for company in companies:
+            if not company.chart_template:
+                chart_template_model.try_loading(
+                    CHART_TEMPLATE, company=company, install_demo=False
+                )
+
+        created = new_companies.mapped("name")
+
+        agri_company = companies.filtered(lambda c: c.name == "NixAl Agri")
+        if agri_company:
+            self._setup_agri_analytics(agri_company)
+
+        self.env.user.write({
+            "company_ids": [Command.link(c.id) for c in companies],
+        })
+
+        message_lines = []
+        if created:
+            message_lines.append(_("Creadas: %s") % ", ".join(created))
+        if existing:
+            message_lines.append(_("Ya existían: %s") % ", ".join(existing))
+        self.result_message = "\n".join(message_lines)
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Compañías Nixal"),
+                "message": self.result_message,
+                "sticky": True,
+            },
+        }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nixal_setup_companies_wizard_form" model="ir.ui.view">
+        <field name="name">nixal.setup.companies.wizard.form</field>
+        <field name="model">nixal.setup.companies.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_create_companies" type="object"
+                            string="Crear compañías" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <p>
+                        Esto crea (si no existen ya) las 4 compañías del grupo Nixal:
+                        Nixal NC, Nixal Trade, NixAl Agri y
+                        Nixal Financiación e Inversiones, cada una con su plan
+                        contable español (PYMES) y con acceso concedido al
+                        usuario actual.
+                    </p>
+                    <field name="result_message" readonly="1" invisible="not result_message"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>
