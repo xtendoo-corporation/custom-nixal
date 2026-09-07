@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import Command, _, fields, models
 from odoo.exceptions import UserError
 
 NO_TAX = [(6, 0, [])]
@@ -41,7 +41,15 @@ class NixalDemoImportWizard(models.TransientModel):
         which company the user currently has active in the top-right
         switcher - otherwise multi-company record rules block writes to
         that company's journal entries (e.g. when registering payments).
+
+        This also grants the current user access to the company itself
+        (res.users.company_ids): setting allowed_company_ids alone still
+        raises AccessError if the user was never added to that company
+        (e.g. someone other than the user who ran 'Crear compañías Nixal'
+        is running this wizard).
         """
+        if company not in self.env.user.company_ids:
+            self.env.user.sudo().write({"company_ids": [Command.link(company.id)]})
         allowed = set(self.env.context.get("allowed_company_ids") or self.env.companies.ids)
         allowed.add(company.id)
         return self.with_context(allowed_company_ids=list(allowed))

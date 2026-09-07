@@ -59,6 +59,22 @@ class NixalSetupCompaniesWizard(models.TransientModel):
         existing = existing_companies.mapped("name")
         missing_names = [n for n in COMPANY_NAMES if n not in existing]
 
+        # Reuse Odoo's default bootstrap company ("My Company") as the
+        # first Nixal company instead of leaving it around unused next to
+        # 4 brand new ones - only if it hasn't already been claimed by one
+        # of our own companies (e.g. on a second run of this wizard).
+        renamed = []
+        main_company = self.env.ref("base.main_company")
+        if missing_names and main_company.name not in COMPANY_NAMES:
+            first_name = missing_names.pop(0)
+            main_company.write({
+                "name": first_name,
+                "currency_id": eur.id,
+                "country_id": spain.id,
+            })
+            existing_companies |= main_company
+            renamed.append(first_name)
+
         # Companies must be created in a single batch call: res.company's
         # own create() only triggers the country-based auto-install of
         # localization modules (e.g. account_peppol for Spain) *once*, after
@@ -99,6 +115,10 @@ class NixalSetupCompaniesWizard(models.TransientModel):
         })
 
         message_lines = []
+        if renamed:
+            message_lines.append(
+                _("'My Company' renombrada a: %s") % ", ".join(renamed)
+            )
         if created:
             message_lines.append(_("Creadas: %s") % ", ".join(created))
         if existing:

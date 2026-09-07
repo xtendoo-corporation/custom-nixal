@@ -5,7 +5,7 @@ import re
 from collections import defaultdict
 from datetime import date, datetime
 
-from odoo import _, fields, models
+from odoo import Command, _, fields, models
 from odoo.exceptions import UserError
 
 try:
@@ -13,7 +13,10 @@ try:
 except ImportError:  # pragma: no cover - openpyxl ships with Odoo's requirements.txt
     openpyxl = None
 
-SKIP_LABELS = ("check", "caja", "ptes")
+SKIP_LABELS = (
+    "check", "caja", "ptes", "saldo", "acumulado", "ratio",
+    "capital pendiente", "movimiento mensual", "suma saldos",
+)
 INCOME_HEADER_HINTS = ("venta", "ingreso", "cobro")
 EXPENSE_HEADER_HINTS = ("gasto", "compra")
 AGRI_SPECIES = ["Vacuno", "Porcino", "Ovino"]
@@ -61,7 +64,15 @@ class NixalFullImportWizard(models.TransientModel):
         which company the user currently has active in the top-right
         switcher - otherwise multi-company record rules block writes to
         that company's journal entries (e.g. when posting invoices).
+
+        This also grants the current user access to the company itself
+        (res.users.company_ids): setting allowed_company_ids alone still
+        raises AccessError if the user was never added to that company
+        (e.g. someone other than the user who ran 'Crear compañías Nixal'
+        is running this wizard).
         """
+        if company not in self.env.user.company_ids:
+            self.env.user.sudo().write({"company_ids": [Command.link(company.id)]})
         allowed = set(self.env.context.get("allowed_company_ids") or self.env.companies.ids)
         allowed.add(company.id)
         return self.with_context(allowed_company_ids=list(allowed))
@@ -243,6 +254,38 @@ class NixalFullImportWizard(models.TransientModel):
         return self._create_grouped_moves(company, move_type, entries, product)
 
     # ------------------------------------------------------------------
+    # Financiación / Inversiones (fichero general): mismo layout fila/mes que
+    # las hojas -Ingresos/-Gastos, pero en una sola pestaña con importe en
+    # positivo o negativo (entrada o salida de caja) en vez de dos pestañas
+    # separadas. Todo va a la compañía "Nixal Financiación e Inversiones".
+    # Nota: esto trata el signo del importe como ingreso/gasto financiero
+    # a efectos de visibilidad, no como una imputación contable de préstamo
+    # (activo/pasivo) correcta - es una simplificación deliberada.
+    # ------------------------------------------------------------------
+    def _import_financiacion_inversiones(self, wb, sheet_name, company, product_income, product_expense):
+        if sheet_name not in wb.sheetnames:
+            return 0
+        ws = wb[sheet_name]
+        columns = list(self._dated_columns(ws, date_row=3, year_row=2))
+        entries_income = defaultdict(list)
+        entries_expense = defaultdict(list)
+        for r in range(1, ws.max_row + 1):
+            label = ws.cell(row=r, column=2).value
+            if not isinstance(label, str) or self._is_skippable_label(label):
+                continue
+            partner = self._get_partner(label, customer_rank=1, supplier_rank=1)
+            for c, col_date in columns:
+                amount = ws.cell(row=r, column=c).value
+                if not isinstance(amount, (int, float)) or not amount:
+                    continue
+                month_key = col_date.replace(day=1)
+                bucket = entries_income if amount > 0 else entries_expense
+                bucket[(partner.id, month_key, None)].append((label, amount))
+        created = self._create_grouped_moves(company, "out_invoice", entries_income, product_income)
+        created += self._create_grouped_moves(company, "in_invoice", entries_expense, product_expense)
+        return created
+
+    # ------------------------------------------------------------------
     # Ing y gtos (Agri): secciones "Ventas ..." (ingresos) / "Gastos ..." (gastos)
     # sin contacto identificado -> se usa un contacto genérico por especie.
     # ------------------------------------------------------------------
@@ -255,7 +298,7 @@ class NixalFullImportWizard(models.TransientModel):
         ])
         return {a.name: a.id for a in accounts}
 
-    def _import_agri_ing_y_gtos(self, wb, company):
+    def _import_agri_ing_y_gtos(self, wb, company, investment_company):
         sheet_name = "Ing y gtos"
         if sheet_name not in wb.sheetnames:
             return 0
@@ -263,10 +306,17 @@ class NixalFullImportWizard(models.TransientModel):
         columns = list(self._dated_columns(ws))
         entries_income = defaultdict(list)
         entries_expense = defaultdict(list)
+        entries_investment = defaultdict(list)
         section = None  # True=income, False=expense
         species = None  # 'Vacuno' / 'Porcino' / 'Ovino' / None (shared/general)
+        in_investment_section = False
+        stop_processing = False
         generic_partner = self._get_partner(
             "Contraparte genérica NixAl Agri (importación masiva)", customer_rank=1, supplier_rank=1
+        )
+        investment_partner = self._get_partner(
+            "Contraparte genérica Financiación e Inversiones (importación masiva)",
+            customer_rank=1, supplier_rank=1,
         )
         for r in range(1, ws.max_row + 1):
             label = ws.cell(row=r, column=2).value
@@ -278,6 +328,18 @@ class NixalFullImportWizard(models.TransientModel):
                 for c, _d in columns
             )
             if not has_numbers:
+                # "Préstamos" mixes running balances ("Saldo", "Capital
+                # pendiente amortizar") with actual monthly flows under the
+                # same ambiguous "Movimiento mensual" label - rather than
+                # risk importing a balance as if it were a transaction, we
+                # just stop reading the sheet from here on.
+                if low.strip() == "préstamos" or low.strip() == "prestamos":
+                    stop_processing = True
+                    continue
+                # The clean "Inversiones" (capex) block, however, has plain
+                # monthly purchase amounts - redirect it to the dedicated
+                # Financiación e Inversiones company.
+                in_investment_section = low.strip() == "inversiones"
                 if any(kw in low for kw in INCOME_HEADER_HINTS):
                     section = True
                 elif any(kw in low for kw in EXPENSE_HEADER_HINTS):
@@ -289,23 +351,34 @@ class NixalFullImportWizard(models.TransientModel):
                         species = name
                         break
                 continue
-            if self._is_skippable_label(label) or section is None:
+            if stop_processing or self._is_skippable_label(label) or section is None:
                 continue
-            bucket = entries_income if section else entries_expense
+            if in_investment_section:
+                bucket = entries_investment
+                partner_id = investment_partner.id
+                current_species = None
+            else:
+                bucket = entries_income if section else entries_expense
+                partner_id = generic_partner.id
+                current_species = species
             for c, col_date in columns:
                 amount = ws.cell(row=r, column=c).value
                 if not isinstance(amount, (int, float)) or not amount:
                     continue
                 month_key = col_date.replace(day=1)
-                bucket[(generic_partner.id, month_key, species)].append((label, amount))
+                bucket[(partner_id, month_key, current_species)].append((label, amount))
         product_income = self._get_product("Ingreso Actividad Ganadera (importado)", "service")
         product_expense = self._get_product("Gasto Actividad Ganadera (importado)", "service")
+        product_investment = self._get_product("Inversión Actividad Ganadera (importado)", "service")
         analytic_accounts = self._get_agri_analytic_accounts(company)
         created = self._create_grouped_moves(
             company, "out_invoice", entries_income, product_income, analytic_accounts
         )
         created += self._create_grouped_moves(
             company, "in_invoice", entries_expense, product_expense, analytic_accounts
+        )
+        created += self._create_grouped_moves(
+            investment_company, "in_invoice", entries_investment, product_investment
         )
         return created
 
@@ -321,8 +394,10 @@ class NixalFullImportWizard(models.TransientModel):
             wb = self._load_workbook(self.file_general)
             nc_company = self._get_company("Nixal NC")
             trade_company = self._get_company("Nixal Trade")
+            fininv_company = self._get_company("Nixal Financiación e Inversiones")
             self = self._allow_company(nc_company)
             self = self._allow_company(trade_company)
+            self = self._allow_company(fininv_company)
 
             n_clientes = self._import_clientes(wb)
             n_nc_in = self._import_ledger_sheet(
@@ -341,22 +416,37 @@ class NixalFullImportWizard(models.TransientModel):
                 wb, "Trade-Gastos", trade_company, "in_invoice", "supplier_rank",
                 self._get_product("Gasto Trade (importado)", "service"),
             )
+            n_fin = self._import_financiacion_inversiones(
+                wb, "Financiación", fininv_company,
+                self._get_product("Ingreso Financiación (importado)", "service"),
+                self._get_product("Gasto Financiación (importado)", "service"),
+            )
+            n_inv = self._import_financiacion_inversiones(
+                wb, "Inversiones", fininv_company,
+                self._get_product("Ingreso Inversiones (importado)", "service"),
+                self._get_product("Gasto Inversiones (importado)", "service"),
+            )
             summary.append(_(
                 "Fichero general: %(cli)s contactos NC anotados, "
                 "%(nc_in)s facturas NC, %(nc_out)s facturas de proveedor NC, "
-                "%(tr_in)s facturas Trade, %(tr_out)s facturas de proveedor Trade."
+                "%(tr_in)s facturas Trade, %(tr_out)s facturas de proveedor Trade, "
+                "%(fin)s asientos de Financiación, %(inv)s asientos de Inversiones."
             ) % {
                 "cli": n_clientes, "nc_in": n_nc_in, "nc_out": n_nc_out,
                 "tr_in": n_trade_in, "tr_out": n_trade_out,
+                "fin": n_fin, "inv": n_inv,
             })
 
         if self.file_agri:
             wb_agri = self._load_workbook(self.file_agri)
             agri_company = self._get_company("NixAl Agri")
+            fininv_company = self._get_company("Nixal Financiación e Inversiones")
             self = self._allow_company(agri_company)
-            n_agri = self._import_agri_ing_y_gtos(wb_agri, agri_company)
+            self = self._allow_company(fininv_company)
+            n_agri = self._import_agri_ing_y_gtos(wb_agri, agri_company, fininv_company)
             summary.append(_(
-                "Fichero NixAl Agri: %s asientos/facturas creados en 'Ing y gtos'."
+                "Fichero NixAl Agri: %s asientos/facturas creados en 'Ing y gtos' "
+                "(incluye inversiones ganaderas en Nixal Financiación e Inversiones)."
             ) % n_agri)
 
         message = "\n".join(summary) or _("No se ha importado ningún dato.")
