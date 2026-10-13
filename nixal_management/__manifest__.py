@@ -8,6 +8,7 @@
     "depends": [
         "account",
         "account_budget_oca",
+        "spreadsheet_dashboard",
         "l10n_es",
         "sale_management",
         "purchase",
@@ -15,9 +16,11 @@
     "data": [
         "security/ir.model.access.csv",
         "views/nixal_menus.xml",
+        "views/nixal_budget_report_views.xml",
+        "data/dashboards.xml",
         "wizard/nixal_setup_companies_views.xml",
-        "wizard/nixal_demo_import_views.xml",
-        "wizard/nixal_full_import_views.xml",
+        "wizard/nixal_analytic_setup_views.xml",
+        "wizard/nixal_budget_setup_views.xml",
     ],
     "installable": True,
     "application": True,

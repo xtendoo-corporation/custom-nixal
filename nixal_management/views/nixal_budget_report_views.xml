@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nixal_budget_report_pivot" model="ir.ui.view">
+        <field name="name">nixal.budget.report.pivot</field>
+        <field name="model">nixal.budget.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Previsto vs real" disable_linking="1">
+                <field name="company_id" type="row"/>
+                <field name="plan_id" type="row"/>
+                <field name="analytic_account_id" type="row"/>
+                <field name="date" interval="month" type="col"/>
+                <field name="planned_amount" type="measure"/>
+                <field name="real_amount" type="measure"/>
+                <field name="deviation" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_nixal_budget_report_graph" model="ir.ui.view">
+        <field name="name">nixal.budget.report.graph</field>
+        <field name="model">nixal.budget.report</field>
+        <field name="arch" type="xml">
+            <graph string="Previsto vs real" type="bar">
+                <field name="plan_id"/>
+                <field name="planned_amount" type="measure"/>
+                <field name="real_amount" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_nixal_budget_report_list" model="ir.ui.view">
+        <field name="name">nixal.budget.report.list</field>
+        <field name="model">nixal.budget.report</field>
+        <field name="arch" type="xml">
+            <list string="Previsto vs real">
+                <field name="company_id"/>
+                <field name="plan_id"/>
+                <field name="analytic_account_id"/>
+                <field name="date"/>
+                <field name="planned_amount" sum="Total"/>
+                <field name="real_amount" sum="Total"/>
+                <field name="deviation" sum="Total"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_nixal_budget_report_search" model="ir.ui.view">
+        <field name="name">nixal.budget.report.search</field>
+        <field name="model">nixal.budget.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="analytic_account_id"/>
+                <field name="plan_id"/>
+                <field name="company_id"/>
+                <filter name="this_year" string="Año actual"
+                        domain="[('date', '&gt;=', time.strftime('%Y-01-01')), ('date', '&lt;=', time.strftime('%Y-12-31'))]"/>
+                <separator/>
+                <filter name="group_company" string="Compañía" context="{'group_by': 'company_id'}"/>
+                <filter name="group_plan" string="Plan" context="{'group_by': 'plan_id'}"/>
+                <filter name="group_account" string="Cuenta analítica" context="{'group_by': 'analytic_account_id'}"/>
+                <filter name="group_month" string="Mes" context="{'group_by': 'date:month'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_nixal_budget_report" model="ir.actions.act_window">
+        <field name="name">Previsto vs real</field>
+        <field name="res_model">nixal.budget.report</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="context">{'search_default_this_year': 1}</field>
+    </record>
+    <menuitem id="menu_nixal_budget_report"
+              name="4. Tablero previsto vs real"
+              parent="menu_nixal_root"
+              action="action_nixal_budget_report"
+              sequence="40"/>
+</odoo>

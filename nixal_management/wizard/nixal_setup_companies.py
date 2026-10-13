@@ -7,8 +7,6 @@ COMPANY_NAMES = [
     "Nixal Financiación e Inversiones",
 ]
 CHART_TEMPLATE = "es_pymes"
-AGRI_ANALYTIC_PLAN = "Categorías Nixal"
-AGRI_SPECIES = ["Vacuno", "Porcino", "Ovino"]
 
 
 class NixalSetupCompaniesWizard(models.TransientModel):
@@ -20,34 +18,6 @@ class NixalSetupCompaniesWizard(models.TransientModel):
     def _compute_display_name(self):
         for wizard in self:
             wizard.display_name = _("Crear compañías Nixal")
-
-    def _setup_agri_analytics(self, agri_company):
-        """Create one analytic account per species (Vacuno/Porcino/Ovino)
-        for NixAl Agri, so income/expenses and budgets can be broken down
-        by species like in the client's own spreadsheets.
-
-        These are added to Odoo's default "Project" analytic plan (renamed
-        here) rather than a new plan: account_budget_oca's budget-vs-actual
-        comparison only looks at account.analytic.line.account_id, which is
-        only populated for that root plan - any other plan stores its
-        accounts in a separate dynamic column and would never match.
-        """
-        plan = self.env.ref("analytic.analytic_plan_projects")
-        if plan.name != AGRI_ANALYTIC_PLAN:
-            plan.name = AGRI_ANALYTIC_PLAN
-        Analytic = self.env["account.analytic.account"]
-        for species in AGRI_SPECIES:
-            account = Analytic.search([
-                ("name", "=", species),
-                ("plan_id", "=", plan.id),
-                ("company_id", "=", agri_company.id),
-            ], limit=1)
-            if not account:
-                Analytic.create({
-                    "name": species,
-                    "plan_id": plan.id,
-                    "company_id": agri_company.id,
-                })
 
     def action_create_companies(self):
         self.ensure_one()
@@ -105,10 +75,6 @@ class NixalSetupCompaniesWizard(models.TransientModel):
                 )
 
         created = new_companies.mapped("name")
-
-        agri_company = companies.filtered(lambda c: c.name == "NixAl Agri")
-        if agri_company:
-            self._setup_agri_analytics(agri_company)
 
         self.env.user.write({
             "company_ids": [Command.link(c.id) for c in companies],

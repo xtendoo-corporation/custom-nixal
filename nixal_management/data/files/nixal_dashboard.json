@@ -1,0 +1,428 @@
+{
+ "version": "18.5.10",
+ "revisionId": "START_REVISION",
+ "uniqueFigureIds": true,
+ "settings": {
+  "locale": {
+   "name": "English (US)",
+   "code": "en_US",
+   "thousandsSeparator": ",",
+   "decimalSeparator": ".",
+   "dateFormat": "mm/dd/yyyy",
+   "timeFormat": "hh:mm:ss",
+   "formulaArgSeparator": ",",
+   "weekStart": 7
+  }
+ },
+ "sheets": [
+  {
+   "id": "b1c2d3e4-0000-4000-8000-nixal0000001",
+   "name": "Previsto vs real",
+   "colNumber": 15,
+   "rowNumber": 320,
+   "rows": {},
+   "cols": {
+    "0": {
+     "size": 330
+    },
+    "1": {
+     "size": 110
+    },
+    "2": {
+     "size": 110
+    },
+    "3": {
+     "size": 110
+    },
+    "4": {
+     "size": 110
+    },
+    "5": {
+     "size": 110
+    },
+    "6": {
+     "size": 110
+    },
+    "7": {
+     "size": 110
+    },
+    "8": {
+     "size": 110
+    },
+    "9": {
+     "size": 110
+    },
+    "10": {
+     "size": 110
+    },
+    "11": {
+     "size": 110
+    },
+    "12": {
+     "size": 110
+    },
+    "13": {
+     "size": 110
+    },
+    "14": {
+     "size": 110
+    }
+   },
+   "merges": [],
+   "cells": {
+    "A1": "Nixal - Previsto vs real",
+    "A2": "Previsto (presupuestos) frente a real (apuntes analíticos). Ingresos en positivo, gastos en negativo.",
+    "A19": "Resumen por compañía y plan",
+    "A20": "=PIVOT(1, 30, TRUE, TRUE)",
+    "A44": "Real por plan y mes",
+    "A45": "=PIVOT(2, 30, TRUE, TRUE)",
+    "A64": "Previsto por plan y mes",
+    "A65": "=PIVOT(3, 30, TRUE, TRUE)",
+    "A84": "Detalle por cuenta analítica",
+    "A85": "=PIVOT(4, 200, TRUE, TRUE)",
+    "A3": "Verde: importe positivo (en la desviación, a favor). Rojo: importe negativo (en la desviación, en contra)."
+   },
+   "styles": {
+    "A1": 1,
+    "A2": 2,
+    "A3": 2,
+    "A19": 3,
+    "A44": 3,
+    "A64": 3,
+    "A84": 3
+   },
+   "formats": {},
+   "borders": {},
+   "conditionalFormats": [
+    {
+     "id": "cf-nixal-1",
+     "ranges": [
+      "B20:D43",
+      "B45:N63",
+      "B65:N83",
+      "B85:D320"
+     ],
+     "rule": {
+      "type": "CellIsRule",
+      "operator": "isGreaterThan",
+      "values": [
+       "0"
+      ],
+      "style": {
+       "textColor": "#188038"
+      }
+     }
+    },
+    {
+     "id": "cf-nixal-2",
+     "ranges": [
+      "B20:D43",
+      "B45:N63",
+      "B65:N83",
+      "B85:D320"
+     ],
+     "rule": {
+      "type": "CellIsRule",
+      "operator": "isLessThan",
+      "values": [
+       "0"
+      ],
+      "style": {
+       "textColor": "#d93025"
+      }
+     }
+    }
+   ],
+   "dataValidationRules": [],
+   "figures": [
+    {
+     "id": "c0000001-0000-4000-8000-nixal0000003",
+     "width": 500,
+     "height": 335,
+     "tag": "chart",
+     "data": {
+      "title": {
+       "text": "Real por plan"
+      },
+      "background": "#FFFFFF",
+      "legendPosition": "none",
+      "metaData": {
+       "groupBy": [
+        "plan_id"
+       ],
+       "measure": "real_amount",
+       "order": null,
+       "resModel": "nixal.budget.report",
+       "mode": "bar"
+      },
+      "searchParams": {
+       "comparison": null,
+       "context": {},
+       "domain": [],
+       "groupBy": [
+        "plan_id"
+       ],
+       "orderBy": []
+      },
+      "type": "odoo_bar",
+      "dataSets": [
+       {}
+      ],
+      "verticalAxisPosition": "left",
+      "stacked": false,
+      "chartId": "c0000001-0000-4000-8000-nixal0000003",
+      "fieldMatching": {
+       "f1a2b3c4-0000-4000-8000-nixal0000002": {
+        "chain": "date",
+        "type": "date",
+        "offset": 0
+       }
+      }
+     },
+     "offset": {
+      "x": 0,
+      "y": 0
+     },
+     "col": 0,
+     "row": 2
+    },
+    {
+     "id": "c0000002-0000-4000-8000-nixal0000004",
+     "width": 500,
+     "height": 335,
+     "tag": "chart",
+     "data": {
+      "title": {
+       "text": "Previsto por plan"
+      },
+      "background": "#FFFFFF",
+      "legendPosition": "none",
+      "metaData": {
+       "groupBy": [
+        "plan_id"
+       ],
+       "measure": "planned_amount",
+       "order": null,
+       "resModel": "nixal.budget.report",
+       "mode": "bar"
+      },
+      "searchParams": {
+       "comparison": null,
+       "context": {},
+       "domain": [],
+       "groupBy": [
+        "plan_id"
+       ],
+       "orderBy": []
+      },
+      "type": "odoo_bar",
+      "dataSets": [
+       {}
+      ],
+      "verticalAxisPosition": "left",
+      "stacked": false,
+      "chartId": "c0000002-0000-4000-8000-nixal0000004",
+      "fieldMatching": {
+       "f1a2b3c4-0000-4000-8000-nixal0000002": {
+        "chain": "date",
+        "type": "date",
+        "offset": 0
+       }
+      }
+     },
+     "offset": {
+      "x": 510,
+      "y": 0
+     },
+     "col": 0,
+     "row": 2
+    }
+   ],
+   "tables": [],
+   "areGridLinesVisible": false,
+   "isVisible": true,
+   "headerGroups": {},
+   "comments": {}
+  }
+ ],
+ "styles": {
+  "1": {
+   "textColor": "#01666b",
+   "bold": true,
+   "fontSize": 16
+  },
+  "2": {
+   "textColor": "#434343",
+   "italic": true
+  },
+  "3": {
+   "textColor": "#434343",
+   "bold": true,
+   "fontSize": 12
+  }
+ },
+ "formats": {},
+ "borders": {},
+ "pivots": {
+  "1": {
+   "type": "ODOO",
+   "fieldMatching": {
+    "f1a2b3c4-0000-4000-8000-nixal0000002": {
+     "chain": "date",
+     "type": "date",
+     "offset": 0
+    }
+   },
+   "context": {},
+   "domain": [],
+   "id": "1",
+   "measures": [
+    {
+     "id": "planned_amount",
+     "fieldName": "planned_amount"
+    },
+    {
+     "id": "real_amount",
+     "fieldName": "real_amount"
+    },
+    {
+     "id": "deviation",
+     "fieldName": "deviation"
+    }
+   ],
+   "model": "nixal.budget.report",
+   "name": "Por compañía y plan",
+   "formulaId": "1",
+   "columns": [],
+   "rows": [
+    {
+     "fieldName": "company_id"
+    },
+    {
+     "fieldName": "plan_id"
+    }
+   ]
+  },
+  "2": {
+   "type": "ODOO",
+   "fieldMatching": {
+    "f1a2b3c4-0000-4000-8000-nixal0000002": {
+     "chain": "date",
+     "type": "date",
+     "offset": 0
+    }
+   },
+   "context": {},
+   "domain": [],
+   "id": "2",
+   "measures": [
+    {
+     "id": "real_amount",
+     "fieldName": "real_amount"
+    }
+   ],
+   "model": "nixal.budget.report",
+   "name": "Real por plan y mes",
+   "formulaId": "2",
+   "columns": [
+    {
+     "fieldName": "date",
+     "granularity": "month"
+    }
+   ],
+   "rows": [
+    {
+     "fieldName": "plan_id"
+    }
+   ]
+  },
+  "3": {
+   "type": "ODOO",
+   "fieldMatching": {
+    "f1a2b3c4-0000-4000-8000-nixal0000002": {
+     "chain": "date",
+     "type": "date",
+     "offset": 0
+    }
+   },
+   "context": {},
+   "domain": [],
+   "id": "3",
+   "measures": [
+    {
+     "id": "planned_amount",
+     "fieldName": "planned_amount"
+    }
+   ],
+   "model": "nixal.budget.report",
+   "name": "Previsto por plan y mes",
+   "formulaId": "3",
+   "columns": [
+    {
+     "fieldName": "date",
+     "granularity": "month"
+    }
+   ],
+   "rows": [
+    {
+     "fieldName": "plan_id"
+    }
+   ]
+  },
+  "4": {
+   "type": "ODOO",
+   "fieldMatching": {
+    "f1a2b3c4-0000-4000-8000-nixal0000002": {
+     "chain": "date",
+     "type": "date",
+     "offset": 0
+    }
+   },
+   "context": {},
+   "domain": [],
+   "id": "4",
+   "measures": [
+    {
+     "id": "planned_amount",
+     "fieldName": "planned_amount"
+    },
+    {
+     "id": "real_amount",
+     "fieldName": "real_amount"
+    },
+    {
+     "id": "deviation",
+     "fieldName": "deviation"
+    }
+   ],
+   "model": "nixal.budget.report",
+   "name": "Detalle por cuenta analítica",
+   "formulaId": "4",
+   "columns": [],
+   "rows": [
+    {
+     "fieldName": "plan_id"
+    },
+    {
+     "fieldName": "analytic_account_id"
+    }
+   ]
+  }
+ },
+ "pivotNextId": 5,
+ "customTableStyles": {},
+ "globalFilters": [
+  {
+   "id": "f1a2b3c4-0000-4000-8000-nixal0000002",
+   "type": "date",
+   "label": "Periodo",
+   "defaultValue": "this_year"
+  }
+ ],
+ "lists": {},
+ "listNextId": 1,
+ "chartOdooMenusReferences": {
+  "c0000001-0000-4000-8000-nixal0000003": "nixal_management.menu_nixal_budget_report",
+  "c0000002-0000-4000-8000-nixal0000004": "nixal_management.menu_nixal_budget_report"
+ }
+}

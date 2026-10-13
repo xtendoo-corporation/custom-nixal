@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nixal_budget_setup_wizard_form" model="ir.ui.view">
+        <field name="name">nixal.budget.setup.wizard.form</field>
+        <field name="model">nixal.budget.setup.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_create_budgets" type="object"
+                            string="Crear presupuestos" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <p>
+                        Crea, para cada compañía Nixal, un presupuesto anual con
+                        una línea por cuenta analítica y mes, con previsto 0 para
+                        rellenar. También crea las posiciones presupuestarias
+                        (ingresos, gastos, inversiones, financiación) a partir del
+                        plan contable PYMES. No se importa ningún importe.
+                    </p>
+                    <group>
+                        <field name="year"/>
+                    </group>
+                    <field name="result_message" readonly="1" invisible="not result_message"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

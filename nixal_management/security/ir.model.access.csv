@@ -1,4 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_nixal_setup_companies_wizard,nixal.setup.companies.wizard,model_nixal_setup_companies_wizard,base.group_system,1,1,1,1
-access_nixal_demo_import_wizard,nixal.demo.import.wizard,model_nixal_demo_import_wizard,base.group_system,1,1,1,1
-access_nixal_full_import_wizard,nixal.full.import.wizard,model_nixal_full_import_wizard,base.group_system,1,1,1,1
+access_nixal_analytic_setup_wizard,nixal.analytic.setup.wizard,model_nixal_analytic_setup_wizard,base.group_system,1,1,1,1
+access_nixal_budget_setup_wizard,nixal.budget.setup.wizard,model_nixal_budget_setup_wizard,base.group_system,1,1,1,1
+access_nixal_budget_report,nixal.budget.report,model_nixal_budget_report,account.group_account_user,1,0,0,0

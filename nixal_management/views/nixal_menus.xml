@@ -14,76 +14,27 @@
               action="action_nixal_setup_companies"
               sequence="10"/>
 
-    <record id="action_nixal_demo_import" model="ir.actions.act_window">
-        <field name="name">Importar ejemplo por línea de negocio</field>
-        <field name="res_model">nixal.demo.import.wizard</field>
+    <record id="action_nixal_analytic_setup" model="ir.actions.act_window">
+        <field name="name">Crear estructura analítica Nixal</field>
+        <field name="res_model">nixal.analytic.setup.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
     </record>
-    <menuitem id="menu_nixal_demo_import"
-              name="2. Importar ejemplo (demo)"
+    <menuitem id="menu_nixal_analytic_setup"
+              name="2. Crear estructura analítica"
               parent="menu_nixal_root"
-              action="action_nixal_demo_import"
+              action="action_nixal_analytic_setup"
               sequence="20"/>
 
-    <record id="action_nixal_full_import" model="ir.actions.act_window">
-        <field name="name">Importar todos los datos</field>
-        <field name="res_model">nixal.full.import.wizard</field>
+    <record id="action_nixal_budget_setup" model="ir.actions.act_window">
+        <field name="name">Crear presupuestos Nixal</field>
+        <field name="res_model">nixal.budget.setup.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
     </record>
-    <menuitem id="menu_nixal_full_import"
-              name="3. Importar todos los datos"
+    <menuitem id="menu_nixal_budget_setup"
+              name="3. Crear presupuestos"
               parent="menu_nixal_root"
-              action="action_nixal_full_import"
+              action="action_nixal_budget_setup"
               sequence="30"/>
-
-    <record id="view_nixal_summary_pivot" model="ir.ui.view">
-        <field name="name">nixal.summary.pivot</field>
-        <field name="model">account.move.line</field>
-        <field name="arch" type="xml">
-            <pivot string="Resumen Nixal" disable_linking="1">
-                <field name="company_id" type="row"/>
-                <field name="partner_id" type="row"/>
-                <field name="date" interval="month" type="col"/>
-                <field name="debit" type="measure"/>
-                <field name="credit" type="measure"/>
-                <field name="balance" type="measure"/>
-            </pivot>
-        </field>
-    </record>
-    <record id="view_nixal_summary_list" model="ir.ui.view">
-        <field name="name">nixal.summary.list</field>
-        <field name="model">account.move.line</field>
-        <field name="arch" type="xml">
-            <list string="Resumen Nixal">
-                <field name="company_id"/>
-                <field name="date"/>
-                <field name="move_name"/>
-                <field name="partner_id"/>
-                <field name="account_id"/>
-                <field name="name"/>
-                <field name="debit" sum="Total"/>
-                <field name="credit" sum="Total"/>
-                <field name="balance" sum="Total"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="action_nixal_summary" model="ir.actions.act_window">
-        <field name="name">Resumen de todo lo importado</field>
-        <field name="res_model">account.move.line</field>
-        <field name="view_mode">pivot,list</field>
-        <field name="domain">[("display_type", "=", "product"), ("parent_state", "=", "posted")]</field>
-        <field name="view_ids" eval="[
-            (5, 0, 0),
-            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_nixal_summary_pivot')}),
-            (0, 0, {'view_mode': 'list', 'view_id': ref('view_nixal_summary_list')}),
-        ]"/>
-    </record>
-    <menuitem id="menu_nixal_summary"
-              name="4. Resumen"
-              parent="menu_nixal_root"
-              action="action_nixal_summary"
-              sequence="40"/>
 </odoo>

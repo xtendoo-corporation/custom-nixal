@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nixal_analytic_setup_wizard_form" model="ir.ui.view">
+        <field name="name">nixal.analytic.setup.wizard.form</field>
+        <field name="model">nixal.analytic.setup.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_create_structure" type="object"
+                            string="Crear estructura analítica" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <p>
+                        Crea (si no existen) los planes y cuentas analíticas del
+                        cuadro de gestión de Nixal, cada cuenta en la compañía
+                        que le corresponde. Solo estructura: no se importa
+                        ningún importe. Se puede ejecutar varias veces.
+                    </p>
+                    <field name="result_message" readonly="1" invisible="not result_message"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>
